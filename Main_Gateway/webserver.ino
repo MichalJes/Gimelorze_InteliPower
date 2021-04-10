@@ -5,6 +5,8 @@ void webServerInit()
   webserver.on("/", webServerHandleRoot);
   webserver.on("/config.htm", webServerHandleConfig);
   webserver.on("/post", webServerHandleConfigPost);
+  webserver.on("/postcontrol", webServerHandleControlPost);
+  webserver.on("/status.htm", webServerHandleStatus);
   webserver.begin();
 }
 
@@ -21,6 +23,11 @@ void webServerHandleConfig()
 void webServerProcess()
 {
   webserver.handleClient();
+}
+
+void webServerHandleStatus()
+{
+  webserver.send(200, "text/html", prepareHtmlStatusPage());
 }
 
 String prepareHtmlConfigPage()
@@ -101,7 +108,8 @@ String prepareHtmlRootPage()
   htmlPage = F("<!DOCTYPE HTML>"
                "<html>");
   htmlPage += F("Terminal<br>");
-  htmlPage += F("<a href=\"config.htm\">Config Terminal</a><br><br><br>"
+  htmlPage += F("<a href=\"config.htm\">Config Terminal</a><br>"
+                "<a href=\"status.htm\">System Status</a><br><br><br>"
                 "AP_ssid = ");
   htmlPage += configuration.AP_ssid;
   htmlPage += F("<br>");
@@ -211,6 +219,45 @@ void webServerHandleConfigPost()
   webserver.send(200, "text/html", prepareHtmlAcceptPage());
 }
 
+void webServerHandleControlPost()
+{
+  String tmp;
+  if (webserver.method() == HTTP_POST)
+  {
+    if (webserver.hasArg("control"))
+    {
+      tmp = webserver.arg("control");
+      if(tmp == "0")
+      {
+        // all off
+        Serial.println("Turn off all");
+        nodeSwitchAll(0);
+      }
+      else
+      {
+        // all on
+        Serial.println("Turn on all");
+        nodeSwitchAll(1);
+      }
+    }
+  }
+  webserver.send(200, "text/html", prepareHtmlControlAcceptPage());
+}
+
+String prepareHtmlControlAcceptPage()
+{
+  String htmlPage;
+  htmlPage.reserve(1024);               // prevent ram fragmentation
+  htmlPage = F("<!DOCTYPE HTML>"
+               "<html>");
+  htmlPage += F("Control Sent<br>");
+  htmlPage += F("<a href=\"/status.htm\">Status page</a>");
+  
+  htmlPage += F("</html>"
+                "\r\n");
+  return htmlPage;  
+}
+
 static String configIpToString(byte ipbytes[])
 {
   String result = "";
@@ -231,4 +278,41 @@ static void stringIpToArray(String str_ip, byte ipbytes[])
   unsigned int t[4];
   sscanf(str, "%d %d %d %d", &t[0], &t[1], &t[2], &t[3]);
   for(int i=0; i<4; i++) ipbytes[i] = byte(t[i]);
+}
+
+String prepareHtmlStatusPage()
+{
+  String htmlPage;
+  htmlPage.reserve(2048);               // prevent ram fragmentation
+  htmlPage = F("<!DOCTYPE HTML>"
+               "<html>");
+  htmlPage += F("SYSTEM STATUS<br><br>");
+  htmlPage += F("<a href=\"/\">Main page</a><br><br>");
+
+  htmlPage += F("<form action=\"/postcontrol\" method=\"post\">"
+                "TURN_ON<input type=\"submit\" name=\"control\" value=\"1\"><br>"
+                "TURNOFF<input type=\"submit\" name=\"control\" value=\"0\">"
+                "</form>");
+  
+  htmlPage += F("<br><br>code name state[0] state[1] current[0] current[1] control[0] control[1]<br>");
+  if (nodes.size() > 0)
+  {
+    for(int i = 0; i < nodes.size(); i++)
+    {
+      htmlPage += String(nodes[i].dev_code) + " ";
+      htmlPage += nodes[i].dev_name;
+      htmlPage += F(" ");
+      htmlPage += String(nodes[i].state[0]) + " ";
+      htmlPage += String(nodes[i].state[1]) + " ";
+      htmlPage += String(nodes[i].current[0]) + " ";
+      htmlPage += String(nodes[i].current[1]) + " ";
+      htmlPage += String(nodes[i].control[0]) + " ";
+      htmlPage += String(nodes[i].control[1]) + " ";
+      htmlPage += F("<br>");
+    }    
+  }
+  
+  htmlPage += F("</html>"
+                "\r\n");
+  return htmlPage;   
 }

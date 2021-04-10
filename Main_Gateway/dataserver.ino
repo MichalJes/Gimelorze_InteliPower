@@ -12,17 +12,12 @@ void dataServerProcess()
       if (client.available())
       {
         String line = client.readStringUntil('\r');
-        Serial.print(line);
-        // wait for end of client's request, that is marked with an empty line
-        //if (line.length() == 1 && line[0] == '\n')
-        //{
-        client.println("OK\r\n");
+        String response = nodeHandleFromString(line);
+        client.println(response);
         break;
-        //}
       }
     }
 
-    delay(1);
     client.stop();
     Serial.println("[Client disconnected]");
   }
