@@ -6,23 +6,23 @@
   {
     public:
           device();
-      device(bool kind_, int id_, bool state_, int Class_)
+      device(int kind_, String id_, bool state_, int Class_)
       {
          kind=kind_;
          id=id_;
          state=state_;
-         Class=Class_;
+         state2=Class_;
       }
-      void set(bool kind_, int id_, bool state_, int Class_)
+      void set(int kind_, int id_, bool state_, int Class_)
       {
       kind=kind_;
       id=id_;
       state=state_;
-      Class=Class_;
+      state2=Class_;
       }
       String pack()
       {
-       return  String(kind, BIN)+ " ID "+String(id, DEC) + " State "+String(state, BIN) + " class "+ String(Class, DEC) + '\n';     
+       return  String(kind, DEC)+ " "+ id + " " +String(state, BIN) + " "+ String(state2, DEC) +  " "+String(curr1, DEC) +" "+String(curr2, DEC)+'\r';     
       }
       void on()
       {
@@ -34,8 +34,10 @@
         }
       
     private:
-    bool kind; //0-sensor, 1- 1xwallAdapter, 2-2xwallAdapter, ...
-    int id; //device id, 0-nie podłączone
+    int kind=1; //0-sensor, 1- 1xwallAdapter, 2-2xwallAdapter, ...
+    String id; //device id, 0-nie podłączone
     bool state; //detecting movement/activated relay
-    int Class; // 0-lamps, 1-
+    int state2; // 0-lamps, 1-
+    int curr1=6;
+    int curr2=1;
   };
